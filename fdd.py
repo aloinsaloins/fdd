@@ -8,8 +8,7 @@ import filecmp
 from concurrent.futures import ThreadPoolExecutor
 import copy
 import datetime
-import threading
-mutex = threading.Lock()
+import imageProcess
 
 parser = argparse.ArgumentParser()
 
@@ -17,40 +16,8 @@ parser.add_argument("dir1", nargs='?', default="-")
 parser.add_argument("output", nargs='?', type=argparse.FileType(
     'w', encoding="utf-8"), default="-")
 parser.add_argument("-d", "--dir2", nargs='?', default="-")
-
-
-class t1(threading.Thread):
-    def __init__(self):
-        super().__init__(group=group, target=target, name=name,
-                         args=args, kwargs=kwargs, daemon=daemon)
-
-    def diffImage(list):
-        resultList = []
-        popedDeque = copy.copy(list)
-        for index, content in enumerate(list):
-
-            list.remove(content)
-            if popedDeque:
-                popedDeque.remove(content)
-
-            if not popedDeque:
-                return resultList
-
-            sameList = [content]
-            for content2 in (reversed(popedDeque)):
-                if filecmp.cmp(content, content2):
-                    sameList.append(content2)
-                    # 同じものを比較しないにように削除
-                    popedDeque.remove(content2)
-                    list.remove(content2)
-            if len(sameList) > 1:
-                resultList.append(sameList)
-
-        return resultList
-
-
-def diff():
-    print()
+parser.add_argument("-i", "--image", nargs='?', default='100', type=int, choices=range(0, 100),
+                    help="-i integrity, Integrity is 0-100")
 
 
 def diffImage(list):
@@ -102,29 +69,6 @@ def diffFiles(list):
     return resultList
 
 
-# def printSameFiles(result, args):
-#     for i in result.result():
-#         print("The following files are same:")
-#         for j in i:
-#             fileSize = str(os.path.getsize(j)) + "byte"
-#             timeStamp = str(
-#                 datetime.datetime.fromtimestamp(os.path.getatime(j)))
-#             j = j + " (" + fileSize + ", " + timeStamp + " )"
-#             j = j.replace(args.dir1, "")
-#             print("- " + j)
-
-# def writeSameFiles(result, args):
-#     with open(args.output.name, args.output.mode) as wFile:
-#         for i in result.result():
-#             wFile.write("The following files are same:" + '\n')
-#             for j in i:
-#                 fileSize = str(os.path.getsize(j)) + "byte"
-#                 timeStamp = str(
-#                     datetime.datetime.fromtimestamp(os.path.getatime(j)))
-#                 j = j + " (" + fileSize + ", " + timeStamp + " )"
-#                 j = j.replace(args.dir1, "")
-#                 wFile.write("- " + j + '\n')
-
 def printSameFiles(results, args):
     for i in results:
         for j in i.result():
@@ -163,7 +107,7 @@ def main():
     if args.dir1 is None:
         return
 
-    # ファイルパスのみを取得
+    # ファイルの絶対パスのみを取得
     fileList = [p for p in glob.glob(args.dir1 + '/**', recursive=True)
                 if os.path.isfile(p)]
 
@@ -192,7 +136,11 @@ def main():
             result = execuor.submit(diffFiles, textList)
             results.append(result)
         if len(imageList) > 1:
-            result2 = execuor.submit(diffFiles, imageList)
+            if args.image:
+                result2 = execuor.submit(
+                    imageProcess.diffImages, imageList, args)
+            else:
+                result2 = execuor.submit(diffFiles, imageList)
             results.append(result2)
         if len(imageList) > 1:
             result3 = execuor.submit(diffFiles, vdeoList)
