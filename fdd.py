@@ -16,7 +16,7 @@ parser.add_argument("dir1", nargs='?', default="-")
 parser.add_argument("output", nargs='?', type=argparse.FileType(
     'w', encoding="utf-8"), default="-")
 parser.add_argument("-d", "--dir2", nargs='?', default="-")
-parser.add_argument("-i", "--image", nargs='?', default='100', type=int, choices=range(0, 100),
+parser.add_argument("-s", "--histgram", nargs='?', default='100', type=int, choices=range(0, 100),
                     help="-i integrity, Integrity is 0-100")
 
 
@@ -116,6 +116,13 @@ def main():
     vdeoList = []
     applicationList = []
 
+    if args.dir1 is None:
+        return
+
+    # ファイルの絶対パスのみを取得
+    fileList = [p for p in glob.glob(args.dir1 + '/**', recursive=True)
+                if os.path.isfile(p)]
+
     target = r'/'
     for file in fileList:
         mime = mimetypes.guess_type(file)
@@ -136,7 +143,7 @@ def main():
             result = execuor.submit(diffFiles, textList)
             results.append(result)
         if len(imageList) > 1:
-            if args.image:
+            if args.histgram:
                 result2 = execuor.submit(
                     imageProcess.diffImages, imageList, args)
             else:

@@ -1,4 +1,3 @@
-from PIL import Image
 import cv2
 import copy
 
@@ -16,7 +15,7 @@ def diffImages(list, args):
 
         sameList = [content]
         for content2 in (reversed(popedDeque)):
-            if imagecmp(content, content2) > args.image/100:
+            if imagecmp(content, content2) > args.histgram/100:
                 sameList.append(content2)
                 # 同じものを比較しないにように削除
                 popedDeque.remove(content2)
